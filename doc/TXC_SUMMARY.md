@@ -208,10 +208,10 @@ boolean success = txManager.executeTransaction(tx);
 
 ```bash
 # 基本示例
-java com.alibaba.middleware.txc.TxcExample
+java txc.com.leavesfly.middleware.TxcExample
 
 # 并发测试
-java com.alibaba.middleware.txc.ConcurrentTxcTest
+java txc.com.leavesfly.middleware.ConcurrentTxcTest
 ```
 
 ## 设计亮点

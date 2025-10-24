@@ -33,10 +33,10 @@
    src/main/java/com/alibaba/middleware/txc/QUICKSTART.md
 
 2. 运行示例代码：
-   java com.alibaba.middleware.txc.TxcExample
+   java txc.com.leavesfly.middleware.TxcExample
 
 3. 运行并发测试：
-   java com.alibaba.middleware.txc.ConcurrentTxcTest
+   java txc.com.leavesfly.middleware.ConcurrentTxcTest
 
 四、核心特性
 -----------

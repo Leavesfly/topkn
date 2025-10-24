@@ -40,57 +40,60 @@ TXC框架包含以下核心文件：
 ### 第二步：编写业务代码
 
 ```java
-import com.alibaba.middleware.txc.*;
+import txc.io.leavesfly.middleware.Transaction;
+import txc.io.leavesfly.middleware.TransactionAction;
+import txc.io.leavesfly.middleware.TransactionContext;
+import txc.io.leavesfly.middleware.TransactionManager;
 
 public class MyBusinessService {
-    
+
     public void exchangePoints(String userId, int points) {
         // 1. 获取事务管理器
         TransactionManager txManager = TransactionManager.getInstance();
-        
+
         // 2. 开始事务
         Transaction tx = txManager.beginTransaction();
-        
+
         // 3. 添加分支1：扣除积分
         txManager.addBranch(tx, "扣除积分",
-            // 执行动作
-            new TransactionAction() {
-                public Object execute(TransactionContext ctx) throws Exception {
-                    // 调用你的远程接口
-                    pointsService.deduct(userId, points);
-                    ctx.put("points", points);
-                    return true;
+                // 执行动作
+                new TransactionAction() {
+                    public Object execute(TransactionContext ctx) throws Exception {
+                        // 调用你的远程接口
+                        pointsService.deduct(userId, points);
+                        ctx.put("points", points);
+                        return true;
+                    }
+                },
+                // 补偿动作
+                new TransactionAction() {
+                    public Object execute(TransactionContext ctx) throws Exception {
+                        // 回滚操作
+                        pointsService.add(userId, (Integer) ctx.get("points"));
+                        return true;
+                    }
                 }
-            },
-            // 补偿动作
-            new TransactionAction() {
-                public Object execute(TransactionContext ctx) throws Exception {
-                    // 回滚操作
-                    pointsService.add(userId, (Integer)ctx.get("points"));
-                    return true;
-                }
-            }
         );
-        
+
         // 4. 添加分支2：增加权益
         txManager.addBranch(tx, "增加权益",
-            new TransactionAction() {
-                public Object execute(TransactionContext ctx) throws Exception {
-                    benefitService.add(userId, "vip", 7);
-                    return true;
+                new TransactionAction() {
+                    public Object execute(TransactionContext ctx) throws Exception {
+                        benefitService.add(userId, "vip", 7);
+                        return true;
+                    }
+                },
+                new TransactionAction() {
+                    public Object execute(TransactionContext ctx) throws Exception {
+                        benefitService.deduct(userId, "vip", 7);
+                        return true;
+                    }
                 }
-            },
-            new TransactionAction() {
-                public Object execute(TransactionContext ctx) throws Exception {
-                    benefitService.deduct(userId, "vip", 7);
-                    return true;
-                }
-            }
         );
-        
+
         // 5. 执行事务
         boolean success = txManager.executeTransaction(tx);
-        
+
         if (success) {
             System.out.println("事务执行成功");
         } else {
@@ -104,12 +107,12 @@ public class MyBusinessService {
 
 运行基本示例：
 ```bash
-java com.alibaba.middleware.txc.TxcExample
+java txc.com.leavesfly.middleware.TxcExample
 ```
 
 运行并发测试：
 ```bash
-java com.alibaba.middleware.txc.ConcurrentTxcTest
+java txc.com.leavesfly.middleware.ConcurrentTxcTest
 ```
 
 ## 核心概念
