@@ -81,6 +81,7 @@ public class EncodeUtil {
 
     /**
      * 只需要考虑正数
+     *
      * @param value
      * @return
      */
@@ -122,13 +123,6 @@ public class EncodeUtil {
         System.arraycopy(part1, 0, result, 0, part1.length);
         System.arraycopy(part2, 0, result, part1.length, part2.length);
         return result;
-    }
-
-    public static void main(String[] args) {
-
-        System.out.println(Long.toBinaryString(Long.MAX_VALUE));
-        System.out.println(Long.toBinaryString(Long.MIN_VALUE));
-        System.out.println(Long.toBinaryString(0l));
     }
 
 }

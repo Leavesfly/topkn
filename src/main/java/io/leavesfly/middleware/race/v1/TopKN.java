@@ -76,8 +76,6 @@ public class TopKN implements KNLimit {
         final List<SourceSplitReader> sourceSplitReaders = SourceSplitReader.
                 buildSourceSplitReaders(AppConstants.SINGLE_PARALLEL_READ_FILE_NUM);
 
-//        SourceSplitReader.preOnLoadFiles(sourceSplitReaders);
-
 //        //索引后的数据文件
 //        //索引文件
 //        //索引文件写入器

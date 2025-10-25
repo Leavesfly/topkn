@@ -1,7 +1,5 @@
 package io.leavesfly.middleware.race.v1;
 
-
-import io.leavesfly.middleware.race.v1.bucket.BucketRule;
 import io.leavesfly.middleware.race.v1.util.EncodeUtil;
 
 import java.io.*;
@@ -143,38 +141,4 @@ public class SourceSplitReader {
         }).start();
     }
 
-
-    public static void main(String[] args) {
-
-        final File[] sourceFiles = new File[AppConstants.SOURCE_FILE_NUM];
-        for (int i = 0; i < AppConstants.SOURCE_FILE_NUM; i++) {
-            sourceFiles[i] = new File(BucketRule.getSourceDataFileName(i));
-        }
-
-        SourceSplitReader.setSourceFiles(sourceFiles);
-        final List<SourceSplitReader> sourceSplitReaders = SourceSplitReader.
-                buildSourceSplitReaders(1);
-
-        SourceSplitReader.preOnLoadFiles(sourceSplitReaders);
-
-        for (int i = 0; i < 10; i++) {
-            Thread thread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    long count = 50000000000l;
-                    while (true) {
-                        count--;
-                        if (count % 100000000 == 0) {
-                            try {
-                                System.out.println("wait...");
-                                Thread.sleep(10);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    }
 }

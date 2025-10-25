@@ -3,6 +3,7 @@ package io.leavesfly.middleware.race;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Random;
 
 /**
@@ -18,32 +19,13 @@ public class DataGenerator {
 
     public static void main(String[] args) throws IOException {
 
-        Random random = new Random(System.currentTimeMillis());
-        File fileDir = new File(KNLimit.DATA_DIR);
-        if (!fileDir.exists()) {
-            fileDir.mkdirs();
-        }
-        for (int i = 0; i < 10; i++) {
-            // 写出的文件名
-            String fileName = KNLimit.FILE_PREFIX + i + KNLimit.FILE_SUFFIX;
-            File file = new File(KNLimit.DATA_DIR + fileName);
-            if (!file.exists()) {
-                file.createNewFile();
-            }
-            FileWriter fileWriter = new FileWriter(file);
-            while (file.length() < FILE_SIZE) {
-                Long randomValue = Math.abs(random.nextLong());
-                fileWriter.append(String.valueOf(randomValue) + "\n");
-            }
-
-            fileWriter.close();
-        }
+        geneData();
     }
 
     public static void geneData() {
 
         File sourceDataDir = new File(KNLimit.DATA_DIR);
-        if (sourceDataDir.listFiles().length > 0) {
+        if (Objects.requireNonNull(sourceDataDir.listFiles()).length > 0) {
             return;
         }
 

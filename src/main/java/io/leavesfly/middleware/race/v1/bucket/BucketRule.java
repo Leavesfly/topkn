@@ -75,26 +75,5 @@ public class BucketRule {
         return KNLimit.RESULT_DIR + KNLimit.RESULT_NAME;
     }
 
-    public static void main(String[] args) {
-
-//        Random random = new Random(System.currentTimeMillis());
-//        for (int j = 0; j < 100; j++) {
-//            Long randomValue = Math.abs(random.nextLong());
-//            int[] a1 = getShouldIndexPosition(randomValue);
-//            for (int i = 0; i < a1.length; i++) {
-//                System.out.println(a1[i]);
-//            }
-//
-//            a1 = getFastShouldIndexPosition(randomValue);
-//            for (int i = 0; i < a1.length; i++) {
-//                System.out.println(a1[i]);
-//            }
-//            System.out.println("++++++++");
-//        }
-//
-//
-//        System.out.println(Math.log(128) / Math.log(2));
-
-    }
 
 }
