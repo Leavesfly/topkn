@@ -9,7 +9,6 @@ public class AppConstants {
 
     public static int SINGLE_PARALLEL_READ_FILE_NUM = 5;
 
-    //很关键，决定读写并行情况，越小读写并行效果越好，但是局部索引比较大 每个662k
     public static int LONG_BYTE_BUFFER_NUM = 128;//128
 
     public static int DISK_PAGE_SIZE = 1024 * 16;
@@ -21,16 +20,14 @@ public class AppConstants {
     public static int FILE_INNER_BUCKET_NUM = 512;
 
 
-    //=========================================================
-
     public final static int SOURCE_FILE_NUM = 10;
 
     public final static long MIN_VALUE_RANGE = 0L;
 
     public final static long INVALID_LONG_VALUE = MIN_VALUE_RANGE - 1L;
 
-    public final static String INDEX_INFO_DIR = KNLimit.MIDDLE_DIR + "indexInfo/";
-    public final static String INDEX_DATA_DIR = KNLimit.MIDDLE_DIR + "indexData/";
+    public final static String INDEX_DIR = KNLimit.MIDDLE_DIR + "v1_index/";
+    public final static String DATA_DIR_PATH = KNLimit.MIDDLE_DIR + "v1_data/";
 
     public final static short LONG_BYTE = 8;
 

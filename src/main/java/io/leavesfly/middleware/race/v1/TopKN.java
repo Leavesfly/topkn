@@ -23,6 +23,7 @@ import java.util.concurrent.ThreadFactory;
  */
 public class TopKN implements KNLimit {
 
+
     public static final Logger logger = Logger.getLogger(TopKN.class);
 
     static {
@@ -30,18 +31,18 @@ public class TopKN implements KNLimit {
         Logger rootLogger = Logger.getRootLogger();
         rootLogger.setLevel(Level.INFO);
         try {
-            rootLogger.addAppender(new FileAppender(new PatternLayout("%d{DATE} %-4r [%t] %-5p %c %x - %m%n"), KNLimit.LOG_FILE));
+            rootLogger.addAppender(new FileAppender(new PatternLayout("%d{DATE} %-4r [%t] %-5p %c %x - %m%n"), KNLimit.LOG_DIR + "v1_log"));
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         //初始化中间文件的索引目录
-        File indexInfoDir = new File(AppConstants.INDEX_INFO_DIR);
+        File indexInfoDir = new File(AppConstants.INDEX_DIR);
         if (!indexInfoDir.exists()) {
             indexInfoDir.mkdirs();
         }
 
-        File indexDataDir = new File(AppConstants.INDEX_DATA_DIR);
+        File indexDataDir = new File(AppConstants.DATA_DIR_PATH);
         if (!indexDataDir.exists()) {
             indexDataDir.mkdirs();
         }
@@ -69,27 +70,22 @@ public class TopKN implements KNLimit {
         //数据源文件
         final File[] sourceFiles = new File[AppConstants.SOURCE_FILE_NUM];
         for (int i = 0; i < AppConstants.SOURCE_FILE_NUM; i++) {
-            sourceFiles[i] = new File(BucketRule.getSourceDataFileName(i));
+            sourceFiles[i] = new File(KNLimit.getSourceDataFileName(i));
         }
 
         SourceSplitReader.setSourceFiles(sourceFiles);
-        final List<SourceSplitReader> sourceSplitReaders = SourceSplitReader.
-                buildSourceSplitReaders(AppConstants.SINGLE_PARALLEL_READ_FILE_NUM);
+        final List<SourceSplitReader> sourceSplitReaders = SourceSplitReader.buildSourceSplitReaders(
+                AppConstants.SINGLE_PARALLEL_READ_FILE_NUM);
 
-//        //索引后的数据文件
-//        //索引文件
-//        //索引文件写入器
         final File[] indexDataFiles = new File[AppConstants.BUCKET_FILE_NUM];
         final File[] indexInfoFiles = new File[AppConstants.BUCKET_FILE_NUM];
         final FileBucketWriter[] fileBucketWriters = new FileBucketWriter[AppConstants.BUCKET_FILE_NUM];
+
         for (int i = 0; i < AppConstants.BUCKET_FILE_NUM; i++) {
             indexDataFiles[i] = new File(BucketRule.getIndexDataFileName(i));
             indexInfoFiles[i] = new File(BucketRule.getIndexInfoFileName(i));
             fileBucketWriters[i] = new FileBucketWriter(indexDataFiles[i], indexInfoFiles[i]);
         }
-
-        logger.info("pre-init:" + (System.currentTimeMillis() - time));
-        time = System.currentTimeMillis();
 
         //================2.多线程遍历原数据文件，构建分桶的索引文件===================
 
@@ -123,13 +119,14 @@ public class TopKN implements KNLimit {
                 }
             });
         }
+
         try {
             latchIndex.await();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
-        logger.info("build-index:" + (System.currentTimeMillis() - time));
+        logger.info("build-index-cost-time:" + (System.currentTimeMillis() - time));
         time = System.currentTimeMillis();
 
         //刷新索引数据到文件
@@ -335,14 +332,13 @@ public class TopKN implements KNLimit {
 
         topKN.init();
 
-        logger.info("index build：" + (System.currentTimeMillis() - time));
+        logger.info("index build-total-cost-time：" + (System.currentTimeMillis() - time));
+
         time = System.currentTimeMillis();
 
         topKN.processTopKN(10000000, 100);
 
-        // topKN.processTopKN(Long.valueOf(args[0]), Integer.valueOf(args[1]));
-
-        logger.info("search data:" + (System.currentTimeMillis() - time));
+        logger.info("search data-cost-time:" + (System.currentTimeMillis() - time));
     }
 
 }

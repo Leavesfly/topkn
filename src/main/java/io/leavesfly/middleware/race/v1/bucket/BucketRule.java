@@ -51,20 +51,14 @@ public class BucketRule {
     }
 
 
-    public static String getSourceDataFileName(int i) {
-        return KNLimit.DATA_DIR + KNLimit.FILE_PREFIX + i + KNLimit.FILE_SUFFIX;
-    }
 
-    public static String getSourceTestDataFileName(int i) {
-        return KNLimit.DATA_DIR + "test_" + i + KNLimit.FILE_SUFFIX;
-    }
 
     public static String getIndexDataFileName(int i) {
-        return AppConstants.INDEX_DATA_DIR + i + ".data";
+        return AppConstants.DATA_DIR_PATH + i + ".data";
     }
 
     public static String getIndexInfoFileName(int i) {
-        return AppConstants.INDEX_INFO_DIR + i + ".index";
+        return AppConstants.INDEX_DIR + i + ".index";
     }
 
     public static String getGlobalIndexInfoFileName() {

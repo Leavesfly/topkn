@@ -104,41 +104,4 @@ public class SourceSplitReader {
             e.printStackTrace();
         }
     }
-
-    public static void preOnLoadFiles(final List<SourceSplitReader> sourceSplitReaders) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                int size = sourceSplitReaders.size();
-                for (int i = 0; i < size; i++) {
-                    final int finalI = i;
-                    Thread thread = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            long time = System.currentTimeMillis();
-                            try {
-                                byte[] buffer = new byte[AppConstants.DISK_PAGE_SIZE];
-                                SourceSplitReader sourceSplitReader = sourceSplitReaders.get(finalI);
-                                long size = sourceSplitReader.size;
-                                int tmp;
-                                long count = 0l;
-                                RandomAccessFile randomAccessFile = new RandomAccessFile(sourceSplitReader.file, "r");
-                                randomAccessFile.seek(sourceSplitReader.randomAccess.getFilePointer());
-                                while ((tmp = randomAccessFile.read(buffer)) > 0
-                                        && (count += tmp) <= size) {
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                            TopKN.logger.info("file" + finalI + "load over:" + (System.currentTimeMillis() - time));
-                        }
-                    });
-                    //确保优先读取缓存
-                    thread.setPriority(Thread.MAX_PRIORITY);
-                    thread.start();
-                }
-            }
-        }).start();
-    }
-
 }

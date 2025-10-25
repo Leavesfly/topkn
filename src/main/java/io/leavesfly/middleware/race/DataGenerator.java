@@ -24,16 +24,17 @@ public class DataGenerator {
 
     public static void geneData() {
 
-        File sourceDataDir = new File(KNLimit.DATA_DIR);
+        File sourceDataDir = new File(KNLimit.SOURCE_DATA_DIR);
+        sourceDataDir.mkdirs();
+
         if (Objects.requireNonNull(sourceDataDir.listFiles()).length > 0) {
             return;
         }
 
         Random random = new Random(System.currentTimeMillis());
         for (int i = 0; i < 10; i++) {
-            // 写出的文件名
-            String fileName = KNLimit.FILE_PREFIX + i + KNLimit.FILE_SUFFIX;
-            File file = new File(KNLimit.DATA_DIR + fileName);
+            String fileName = KNLimit.getSourceDataFileName(i);
+            File file = new File(fileName);
             FileWriter fileWriter = null;
             try {
                 fileWriter = new FileWriter(file);
@@ -45,6 +46,8 @@ public class DataGenerator {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
+            System.out.println(fileName + "had Gened.");
         }
     }
 }

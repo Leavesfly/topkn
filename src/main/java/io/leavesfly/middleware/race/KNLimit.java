@@ -19,13 +19,18 @@ public interface KNLimit {
 
 
     // 测试的时候可以换成自己的目录(测试使用)
-    String DATA_DIR = "/Users/yefei.yf/Projects/LimitKNDemo/source_data/";
+    String SOURCE_DATA_DIR = "/Users/yefei.yf/Projects/LimitKNDemo/source_data/";
 
     String MIDDLE_DIR = "/Users/yefei.yf/Projects/LimitKNDemo/middle_data/";
 
+    String LOG_DIR = "/Users/yefei.yf/Projects/LimitKNDemo/log/";
+
     String RESULT_DIR = "/Users/yefei.yf/Projects/LimitKNDemo/result_data/";
 
-    String LOG_FILE = "/Users/yefei.yf/Projects/LimitKNDemo/limitkn.log";
+
+    static String getSourceDataFileName(int fileId) {
+        return KNLimit.SOURCE_DATA_DIR + KNLimit.FILE_PREFIX + fileId + KNLimit.FILE_SUFFIX;
+    }
 
     /**
      * @param k

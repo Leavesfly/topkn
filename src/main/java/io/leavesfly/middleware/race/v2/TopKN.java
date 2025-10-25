@@ -34,10 +34,11 @@ public class TopKN implements KNLimit {
     private static final String INDEX_DIR = MIDDLE_DIR + "v2_index/";
     private static final String DATA_DIR_PATH = MIDDLE_DIR + "v2_data/";
     private static final String GLOBAL_INDEX_FILE = INDEX_DIR + "global.idx";
+    private static final String LOG_FILE = LOG_DIR + "v2_log";
 
     // 每个桶的缓冲区大小（字节数）
     private static final int BUCKET_BUFFER_SIZE = 8 * 256; // 256个long值
-    
+
     // 索引缓存（进程级缓存，5轮查询复用）
     private static GlobalIndex cachedGlobalIndex = null;
     private static final Object cacheLock = new Object();
@@ -85,12 +86,12 @@ public class TopKN implements KNLimit {
         int locateBucket(long k) {
             int left = 0, right = TOTAL_BUCKET_NUM - 1;
             int result = -1;
-            
+
             while (left <= right) {
                 int mid = left + (right - left) / 2;
                 long start = bucketInfo[mid][0];
                 long count = bucketInfo[mid][1];
-                
+
                 if (k >= start && k < start + count) {
                     return mid;
                 } else if (k < start) {
@@ -99,7 +100,7 @@ public class TopKN implements KNLimit {
                     left = mid + 1;
                 }
             }
-            
+
             // 降级：如果二分未找到，回退到线性查找（处理边界情况）
             for (int i = 0; i < TOTAL_BUCKET_NUM; i++) {
                 long start = bucketInfo[i][0];
@@ -193,7 +194,7 @@ public class TopKN implements KNLimit {
         void flush() throws IOException {
             for (int l1 = 0; l1 < LEVEL1_BUCKET_NUM; l1++) {
                 long currentOffset = LEVEL2_BUCKET_NUM * 16;
-                
+
                 // 刷新所有二级桶的数据
                 for (int l2 = 0; l2 < LEVEL2_BUCKET_NUM; l2++) {
                     flushBuffer(l1, l2);
@@ -251,7 +252,7 @@ public class TopKN implements KNLimit {
                 executor.submit(new Runnable() {
                     public void run() {
                         try {
-                            String fileName = DATA_DIR + FILE_PREFIX + fid + FILE_SUFFIX;
+                            String fileName = KNLimit.getSourceDataFileName(fid);
                             BufferedReader reader = new BufferedReader(
                                     new FileReader(fileName), 1024 * 64);
                             String line;
@@ -316,7 +317,7 @@ public class TopKN implements KNLimit {
         try {
             // 加载或使用缓存的全局索引
             GlobalIndex globalIndex = getOrLoadGlobalIndex();
-            
+
             logger.info("开始查询 top(" + k + ", " + n + ")");
 
             // 定位起始和结束桶（使用二分查找）
@@ -334,7 +335,7 @@ public class TopKN implements KNLimit {
 
             if (startBucket == endBucket) {
                 // 数据在同一个桶内 - 使用局部选择优化
-                result = readBucketWithPartialSelect(startBucket, 
+                result = readBucketWithPartialSelect(startBucket,
                         k - globalIndex.getStartSeq(startBucket), n);
             } else {
                 // 数据跨越多个桶 - 并行读取优化
@@ -343,7 +344,7 @@ public class TopKN implements KNLimit {
 
             // 输出结果
             writeResult(result);
-            
+
             logger.info("查询完成，耗时: " + (System.currentTimeMillis() - queryStart) + "ms");
 
         } catch (Exception e) {
@@ -351,7 +352,7 @@ public class TopKN implements KNLimit {
             e.printStackTrace();
         }
     }
-    
+
     /**
      * 获取或加载全局索引（带缓存）
      */
@@ -359,7 +360,7 @@ public class TopKN implements KNLimit {
         if (cachedGlobalIndex != null) {
             return cachedGlobalIndex;
         }
-        
+
         synchronized (cacheLock) {
             if (cachedGlobalIndex == null) {
                 ObjectInputStream ois = new ObjectInputStream(
@@ -371,49 +372,49 @@ public class TopKN implements KNLimit {
             return cachedGlobalIndex;
         }
     }
-    
+
     /**
      * 单桶局部选择读取（优化：只排序需要的部分）
      */
-    private long[] readBucketWithPartialSelect(int bucketId, long offset, int n) 
+    private long[] readBucketWithPartialSelect(int bucketId, long offset, int n)
             throws IOException {
         long[] bucketData = readAndSortBucket(bucketId);
-        
+
         // 边界检查
         if (offset >= bucketData.length) {
             return new long[0];
         }
-        
+
         int actualN = (int) Math.min(n, bucketData.length - offset);
         long[] result = new long[actualN];
         System.arraycopy(bucketData, (int) offset, result, 0, actualN);
         return result;
     }
-    
+
     /**
      * 并行读取多个桶（利用多核加速）
      */
-    private long[] readMultipleBucketsParallel(GlobalIndex globalIndex, 
-            int startBucket, int endBucket, long k, int n) throws Exception {
-        
+    private long[] readMultipleBucketsParallel(GlobalIndex globalIndex,
+                                               int startBucket, int endBucket, long k, int n) throws Exception {
+
         final long[] result = new long[n];
         final int bucketCount = endBucket - startBucket + 1;
-        
+
         // 如果只有2个桶，直接串行处理（避免线程开销）
         if (bucketCount == 2) {
             return readTwoBucketsSequential(globalIndex, startBucket, endBucket, k, n);
         }
-        
+
         // 多于2个桶，使用并行读取
         ExecutorService executor = Executors.newFixedThreadPool(
                 Math.min(bucketCount, Runtime.getRuntime().availableProcessors()));
         final CountDownLatch latch = new CountDownLatch(bucketCount);
         final long[][] bucketDataArray = new long[bucketCount][];
-        
+
         for (int i = 0; i < bucketCount; i++) {
             final int bucketId = startBucket + i;
             final int index = i;
-            
+
             executor.submit(new Runnable() {
                 public void run() {
                     try {
@@ -427,23 +428,23 @@ public class TopKN implements KNLimit {
                 }
             });
         }
-        
+
         latch.await();
         executor.shutdown();
-        
+
         // 组装结果
         int resultPos = 0;
-        
+
         // 起始桶
         long startOffset = k - globalIndex.getStartSeq(startBucket);
         int startCopyNum = (int) Math.min(
                 bucketDataArray[0].length - startOffset, n - resultPos);
         if (startCopyNum > 0) {
-            System.arraycopy(bucketDataArray[0], (int) startOffset, 
+            System.arraycopy(bucketDataArray[0], (int) startOffset,
                     result, resultPos, startCopyNum);
             resultPos += startCopyNum;
         }
-        
+
         // 中间桶
         for (int i = 1; i < bucketCount - 1 && resultPos < n; i++) {
             int copyNum = Math.min(bucketDataArray[i].length, n - resultPos);
@@ -452,49 +453,49 @@ public class TopKN implements KNLimit {
                 resultPos += copyNum;
             }
         }
-        
+
         // 结束桶
         if (resultPos < n && bucketCount > 1) {
             int copyNum = n - resultPos;
             if (copyNum > 0 && bucketDataArray[bucketCount - 1].length > 0) {
-                System.arraycopy(bucketDataArray[bucketCount - 1], 0, 
+                System.arraycopy(bucketDataArray[bucketCount - 1], 0,
                         result, resultPos, Math.min(copyNum, bucketDataArray[bucketCount - 1].length));
             }
         }
-        
+
         return result;
     }
-    
+
     /**
      * 串行读取两个桶（避免线程开销）
      */
-    private long[] readTwoBucketsSequential(GlobalIndex globalIndex, 
-            int startBucket, int endBucket, long k, int n) throws IOException {
-        
+    private long[] readTwoBucketsSequential(GlobalIndex globalIndex,
+                                            int startBucket, int endBucket, long k, int n) throws IOException {
+
         long[] result = new long[n];
         int resultPos = 0;
-        
+
         // 读取起始桶
         long[] startBucketData = readAndSortBucket(startBucket);
         long startOffset = k - globalIndex.getStartSeq(startBucket);
         int startCopyNum = (int) Math.min(
                 startBucketData.length - startOffset, n);
         if (startCopyNum > 0) {
-            System.arraycopy(startBucketData, (int) startOffset, 
+            System.arraycopy(startBucketData, (int) startOffset,
                     result, resultPos, startCopyNum);
             resultPos += startCopyNum;
         }
-        
+
         // 读取结束桶
         if (resultPos < n) {
             long[] endBucketData = readAndSortBucket(endBucket);
             int copyNum = n - resultPos;
             if (copyNum > 0 && endBucketData.length > 0) {
-                System.arraycopy(endBucketData, 0, result, resultPos, 
+                System.arraycopy(endBucketData, 0, result, resultPos,
                         Math.min(copyNum, endBucketData.length));
             }
         }
-        
+
         return result;
     }
 
