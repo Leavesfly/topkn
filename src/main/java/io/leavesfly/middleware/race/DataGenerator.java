@@ -14,8 +14,8 @@ import java.util.Random;
  */
 public class DataGenerator {
 
-    // 每个小文件的大小，比赛规定是每个文件大小1G。
-    private static final long FILE_SIZE = 1 * 1024 * 1024 * 1024L;
+    // 每个小文件的大小，比赛规定是每个文件大小1G，本地测试改成每个文件100M。
+    private static final long FILE_SIZE = (long) (0.1f * 1024 * 1024 * 1024L);
 
     public static void main(String[] args) throws IOException {
 
